@@ -543,3 +543,7 @@ server <- function(input, output, session){
   })
 }
 shinyApp(ui = ui, server = server)
+#目前缺少的: 
+#1. 美化
+#2. 版面設計
+#3. 當今天使用者有不同權限時，該如何輸出相對應的圖片
