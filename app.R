@@ -1,6 +1,19 @@
 library(shiny)
+library(shinythemes)
+library(tidyverse)
+library(ggplot2)
+library(ggrepel)
+library(grid)
+library(gridExtra)
+
 院 <- c("請選擇院所", "傳播學院", "外國語文學院", "教育學院", "文學院", "民生學院", "法律學院", "理工學院", "社會科學院", "管理學院", "織品服裝學院", "藝術學院", "醫學院")
 系 <- c("請選擇系所")
+系所<-c("請選擇系所","影像傳播學系", "新聞傳播學系", "廣告傳播學系","英國語文學系", "德語語文學系", "法國語文學系", "西班牙語文學系", "日本語文學系", "義大利語文學系"
+      ,"體育學系體育學組", "體育學系運動競技組", "體育學系運動健康管理組","圖書資訊學系", "教育領導與科技發展學士學位學程","中國文學系", "歷史學系", "哲學系","兒童與家庭學系", "餐旅管理學系", "食品科學系", "營養科學系",
+      "法律學系", "財經法律學系", "學士後法律學系","數學系應用數學組", "數學系資訊數學組","物理學系光電物理組", "物理學系物理組","化學系", "生命科學系", "資訊工程學系", "電機工程學系", "醫學資訊與創新應用學士學位學程", "人工智慧與資訊安全學士學位學程",
+      "社會學系", "社會工作學系", "經濟學系", "宗教學系", "心理學系", "天主教研修學士學位學程", "企業管理學系", "會計學系", "統計資訊學系", "金融與國際企業學系", "資訊管理學系",
+      "織品服裝學系織品設計組", "織品服裝學系服飾設計組", "織品服裝學系織品服飾行銷組", "音樂學系", "應用美術學系", "景觀設計學系",
+      "醫學系", "護理學系", "公共衛生學系", "臨床心理學系", "職能治療學系", "呼吸治療學系")
 傳播學院系 <- c("影像傳播學系", "新聞傳播學系", "廣告傳播學系")
 外國語文學院系 <- c("英國語文學系", "德語語文學系", "法國語文學系", "西班牙語文學系", "日本語文學系", "義大利語文學系")
 教育學院系 <- c("體育學系體育學組", "體育學系運動競技組", "體育學系運動健康管理組","圖書資訊學系", "教育領導與科技發展學士學位學程")
@@ -15,147 +28,486 @@ library(shiny)
 醫學院系 <- c("醫學系", "護理學系", "公共衛生學系", "臨床心理學系", "職能治療學系", "呼吸治療學系")
 
 # Define UI ----
-ui <- fluidPage(
-  h1("各系110年度三大入學管道學業表現", align = "left"),
+ui <- navbarPage(
+  "各系110年度三大入學管道學業表現",
+  theme = shinythemes::shinytheme("flatly"),
+  #shinythemes::themeSelector("flatly"),
+  #theme = shinythemes::themeSelector("flatly"),
+  #theme = shinytheme("cerulean"),
+  #titlePanel("各系110年度三大入學管道學業表現"),
+  tags$head(
+    tags$link(rel = "stylesheet", type = "text/css", href = "theme2.css")
+  ),
   sidebarLayout(
     sidebarPanel(
       fluidRow(
         column(6,
-               selectInput("v1", label = "請選擇院所", choices = 院, multiple = FALSE)),
+               checkboxInput("v0", label = "全校分析結果",value=FALSE)),
         column(6,
-               selectInput("v2", label = "請選擇系所", choices = 系, multiple = FALSE)),
+               selectInput("v2", label = "請選擇系所", choices = 系所, multiple = FALSE)),
+        column(6,
+               selectInput("v1", label = "請選擇院所", choices = 院, multiple = FALSE)),
         textOutput("selected_v1"),#在底下server內新增對應Rcode
         textOutput("selected_v2"),#在底下server內新增對應Rcode
+        textOutput("check_v0")
       )
     ),
     mainPanel(
       h3("本頁面探討全校三大入學管道之學生的總平均學業表現，將學生學業平均分數分成以下五大級距，根據所得出的比例數據做分析。"),
-      h4("(上圖為各院之分析結果，下圖為該院各系所的分析結果)"),
-      uiOutput("imageOfCollege"),#院之圖
-      textOutput("explanationOfCollege"),#院之解釋
-      
-      uiOutput("imageOfDepartment"),#院+系之圖
-      textOutput("explanationOfDepartment")#院+系所之解釋
+      tabsetPanel(
+        tabPanel("全校之分析結果",uiOutput("imageOfAll"),textOutput("explanationOfAll")),
+        tabPanel("各院之分析結果",fluidRow(column(4,plotOutput("piechart1")),column(4,plotOutput("piechart2")),column(4,plotOutput("piechart3"))),htmlOutput("explanationOfCollege")),
+        tabPanel("該院各系所的分析結果",uiOutput("imageOfDepartment"),textOutput("explanationOfDepartment"))
+      )
     )
   )
 )
 
 server <- function(input, output, session){
   #自動更新院選項
-  observe({
-    if(!is.null(input$v2))
-      updateSelectInput(session, "v1", 
-                        choices = 院[!(院 %in% input$v2)], 
-                        selected = isolate(input$v1))
-  })
+  #observe({
+    #if(!is.null(input$v2))
+      #updateSelectInput(session, "v1", 
+                        #choices = 院[!(院 %in% input$v2)], 
+                        #selected = isolate(input$v1))
+  #})
   #自動更新系選項
   observe({
-    if(!is.null(input$v1))
-      if((input$v1)=="傳播學院")
-        updateSelectInput(session, "v2", 
-                          choices = 傳播學院系[!(傳播學院系 %in% input$v1)], 
-                          selected = isolate(input$v2))
-    else if((input$v1)=="外國語文學院")
-      updateSelectInput(session, "v2", 
-                        choices = 外國語文學院系[!(外國語文學院系 %in% input$v1)], 
-                        selected = isolate(input$v2))
-    else if((input$v1)=="教育學院")
-      updateSelectInput(session, "v2", 
-                        choices = 教育學院系[!(教育學院系 %in% input$v1)], 
-                        selected = isolate(input$v2))
-    else if((input$v1)=="文學院")
-      updateSelectInput(session, "v2", 
-                        choices = 文學院系[!(文學院系 %in% input$v1)], 
-                        selected = isolate(input$v2))
-    else if((input$v1)=="民生學院")
-      updateSelectInput(session, "v2", 
-                        choices = 民生學院系[!(民生學院系 %in% input$v1)], 
-                        selected = isolate(input$v2))
-    else if((input$v1)=="法律學院")
-      updateSelectInput(session, "v2", 
-                        choices = 法律學院系[!(法律學院系 %in% input$v1)], 
-                        selected = isolate(input$v2))
-    else if((input$v1)=="理工學院")
-      updateSelectInput(session, "v2", 
-                        choices = 理工學院系[!(理工學院系 %in% input$v1)], 
-                        selected = isolate(input$v2))
-    else if((input$v1)=="社會科學院")
-      updateSelectInput(session, "v2", 
-                        choices = 社會科學院系[!(社會科學院系 %in% input$v1)], 
-                        selected = isolate(input$v2))
-    else if((input$v1)=="管理學院")
-      updateSelectInput(session, "v2", 
-                        choices = 管理學院系[!(管理學院系 %in% input$v1)], 
-                        selected = isolate(input$v2))
-    else if((input$v1)=="織品服裝學院")
-      updateSelectInput(session, "v2", 
-                        choices = 織品服裝學院系[!(織品服裝學院系 %in% input$v1)], 
-                        selected = isolate(input$v2))
-    else if((input$v1)=="藝術學院")
-      updateSelectInput(session, "v2", 
-                        choices = 藝術學院系[!(藝術學院系 %in% input$v1)], 
-                        selected = isolate(input$v2))
-    else if((input$v1)=="醫學院")
-      updateSelectInput(session, "v2", 
-                        choices = 醫學院系[!(醫學院系 %in% input$v1)], 
-                        selected = isolate(input$v2))
+    if((input$v2)=="影像傳播學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    
+    else if((input$v2)=="新聞傳播學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="廣告傳播學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="英國語文學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="德語語文學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="法國語文學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="西班牙語文學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="日本語文學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="義大利語文學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="體育學系體育學組")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="體育學系運動競技組")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="體育學系運動健康管理組")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="圖書資訊學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="教育領導與科技發展學士學位學程")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="中國文學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="歷史學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="哲學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="兒童與家庭學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="餐旅管理學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="食品科學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="營養科學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="法律學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="財經法律學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="學士後法律學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="數學系應用數學組")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="數學系資訊數學組")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="物理學系光電物理組")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="學士後法律學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="物理學系物理組")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="化學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="生命科學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="資訊工程學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="電機工程學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="醫學資訊與創新應用學士學位學程")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="人工智慧與資訊安全學士學位學程")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="社會學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="社會工作學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="經濟學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="宗教學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="心理學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="天主教研修學士學位學程")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="企業管理學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="會計學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="統計資訊學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="金融與國際企業學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="資訊管理學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="織品服裝學系織品設計組")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="織品服裝學系服飾設計組")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="織品服裝學系織品服飾行銷組")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="音樂學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="心理學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="應用美術學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="景觀設計學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="醫學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="護理學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="公共衛生學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="臨床心理學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="職能治療學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
+    else if((input$v2)=="呼吸治療學系")
+      updateSelectInput(session, "v1", 
+                        choices = 院, 
+                        selected = isolate(input$v1))
   })
   #取得使用者所選取的院所
-  output$selected_v1 <- renderText({ 
-    paste("您已選擇:",input$v1)
-  })
-  #取得使用者所選取的系所
   output$selected_v2 <- renderText({ 
     paste("您已選擇:",input$v2)
+  })
+  output$selected_v1 <- renderText({ 
+    paste("您已選擇:",input$v1)
   })
   
   #the 1st one is choosen and the 2nd one is absent
   #if((is.null(input$v1)==FALSE) & (is.null(input$v2)==TRUE)){
-  
+  setwd("C:\\Apps\\Rshiny\\招生戰情室")
+  data <- read.csv('110學生成績資料.csv')
+  piechartmaker <- function(data, department, type) {
+    data <- data %>%
+      filter(學院名 == department)
+    if (type == '繁星推薦') {
+      d1 <- data %>%
+        filter(入學管道 == '繁星推薦一般考生' | 入學管道 == '繁星推薦原住民')
+    }
+    else if (type == '申請入學') {
+      d1 <- data %>%
+        filter(grepl('申請入學', 入學管道))
+    }
+    else if (type == '指考') {
+      d1 <- data %>%
+        filter(入學管道 == '學士班指考' | 入學管道 == '重點科別公費生考試入學')
+    }
+    else {
+      return('type error!')
+    }
+    
+    datalist <- list()
+    for (i in (1:5)) {
+      if (i < 5) {
+        datalist[i] <- d1 %>% 
+          filter(score < 110-i*10 & score >= 100-i*10) %>% 
+          summarise(n = n())
+      }
+      else {
+        datalist[i] <- d1 %>% 
+          filter(score < 60)%>% 
+          summarise(n = n())
+      }
+    }
+    datalist <- unlist(datalist)
+    names <- c('100~90', '89~80', '79~70', '69~60', '60以下')
+    datalist <- round(datalist/sum(datalist)*100)
+    df <- data.frame(value = datalist, group = names)
+    df2 <- df %>% 
+      mutate(csum = rev(cumsum(rev(value))), 
+             pos = value/2 + lead(csum, 1),
+             pos = if_else(is.na(pos), value/2, pos))
+    g <- ggplot(df, aes(x = '', y = value, fill = fct_inorder(group))) +
+      geom_col(width = 1, color = 1) +
+      coord_polar(theta = 'y') +
+      scale_fill_brewer(palette = 'Pastel1') +
+      geom_label_repel(data = df2,
+                       aes(y = pos, label = paste0(value, '%')),
+                       size = 2.5, nudge_x = 1, show.legend = FALSE) +
+      guides(fill = guide_legend(title = '分數', nrow = 5, title.position = 'top')) +
+      theme_void() + theme(legend.position = 'bottom', plot.title = element_text(size = 15, face = 'bold', hjust = 0.5, vjust = 3,family = "BL"), legend.key.size = unit(3, 'mm'), legend.title = element_text(size = 12,family = "BL"), legend.text = element_text(size = 8,family = "BL")) +
+      labs(title = type)
+    return(g)
+  }
   #顯示:只選擇各院後之圖片(沒選擇系所)
-  output$imageOfCollege <- renderUI({
+  output$imageOfAll <- renderUI({
+    if(input$v0=="TRUE"){
+      img(height = 600, width = 720, src = "全校學生成績分布.jpeg")
+    }
+  })
+  output$explanationOfAll <- renderText({
+    if(input$v0=="TRUE"){
+      paste("全校110學年度入學三大入學生學業表現可知，平均在80分以上之比例高低為：繁星推薦(66%)>個人申請(42%)>指考分發(34%)，可推論110學年度傳播學院繁星推薦入學的學生學業表現相對優良。")
+    }
+  })
+  output$piechart1 <- renderPlot({
     #if(!is.null(input$v2)==is.null(input$v2)){}   observe?
-      if(input$v1 == "傳播學院"){
-        img(height = 600, width = 720, src = "傳播學院學生成績分布.jpeg")
-      }
-      else if(input$v1 == "外國語文學院"){
-        img(height = 600, width = 720, src = "外國語文學院學生成績分布.jpeg")
-      }
-      else if(input$v1 == "教育學院"){
-        img(height = 600, width = 720, src = "教育學院學生成績分布.jpeg")
-      }
-      else if(input$v1 == "文學院"){
-        img(height = 600, width = 720, src = "文學院學生成績分布.jpeg")
-      }
-      else if(input$v1 == "民生學院"){
-        img(height = 600, width = 720, src = "民生學院學生成績分布.jpeg")
-      }
-      else if(input$v1 == "法律學院"){
-        img(height = 600, width = 720, src = "法律學院學生成績分布.jpeg")
-      }
-      else if(input$v1 == "理工學院"){
-        img(height = 600, width = 720, src = "理工學院學生成績分布.jpeg")
-      }
-      else if(input$v1 == "社會科學院"){
-        img(height = 600, width = 720, src = "社會科學院學生成績分布.jpeg")
-      }
-      else if(input$v1 == "管理學院"){
-        img(height = 600, width = 720, src = "管理學院學生成績分布.jpeg")
-      }
-      else if(input$v1 == "織品服裝學院"){
-        img(height = 600, width = 720, src = "織品服裝學院學生成績分布.jpeg")
-      }
-      else if(input$v1 == "藝術學院"){
-        img(height = 600, width = 720, src = "藝術學院學生成績分布.jpeg")
-      }
-      else if(input$v1 == "醫學院"){
-        img(height = 600, width = 720, src = "醫學院學生成績分布.jpeg")
-      }
+    if(input$v1 == "傳播學院"){
+      piechartmaker(data, input$v1, type = '繁星推薦')
+    }
+    else if(input$v1 == "外國語文學院"){
+      piechartmaker(data, input$v1, type = '繁星推薦')
+    }
+    else if(input$v1 == "教育學院"){
+      piechartmaker(data, input$v1, type = '繁星推薦')
+    }
+    else if(input$v1 == "文學院"){
+      piechartmaker(data, input$v1, type = '繁星推薦')
+    }
+    else if(input$v1 == "民生學院"){
+      piechartmaker(data, input$v1, type = '繁星推薦')
+    }
+    else if(input$v1 == "法律學院"){
+      piechartmaker(data, input$v1, type = '繁星推薦')
+    }
+    else if(input$v1 == "理工學院"){
+      piechartmaker(data, input$v1, type = '繁星推薦')
+    }
+    else if(input$v1 == "社會科學院"){
+      piechartmaker(data, input$v1, type = '繁星推薦')
+    }
+    else if(input$v1 == "管理學院"){
+      piechartmaker(data, input$v1, type = '繁星推薦')
+    }
+    else if(input$v1 == "織品服裝學院"){
+      piechartmaker(data, input$v1, type = '繁星推薦')
+    }
+    else if(input$v1 == "藝術學院"){
+      piechartmaker(data, input$v1, type = '繁星推薦')
+    }
+    else if(input$v1 == "醫學院"){
+      piechartmaker(data, input$v1, type = '繁星推薦')
+    }
+  })
+  output$piechart2 <- renderPlot({
+    #if(!is.null(input$v2)==is.null(input$v2)){}   observe?
+    if(input$v1 == "傳播學院"){
+      piechartmaker(data, input$v1, type = '申請入學')
+    }
+    else if(input$v1 == "外國語文學院"){
+      piechartmaker(data, input$v1, type = '申請入學')
+    }
+    else if(input$v1 == "教育學院"){
+      piechartmaker(data, input$v1, type = '申請入學')
+    }
+    else if(input$v1 == "文學院"){
+      piechartmaker(data, input$v1, type = '申請入學')
+    }
+    else if(input$v1 == "民生學院"){
+      piechartmaker(data, input$v1, type = '申請入學')
+    }
+    else if(input$v1 == "法律學院"){
+      piechartmaker(data, input$v1, type = '申請入學')
+    }
+    else if(input$v1 == "理工學院"){
+      piechartmaker(data, input$v1, type = '申請入學')
+    }
+    else if(input$v1 == "社會科學院"){
+      piechartmaker(data, input$v1, type = '申請入學')
+    }
+    else if(input$v1 == "管理學院"){
+      piechartmaker(data, input$v1, type = '申請入學')
+    }
+    else if(input$v1 == "織品服裝學院"){
+      piechartmaker(data, input$v1, type = '申請入學')
+    }
+    else if(input$v1 == "藝術學院"){
+      piechartmaker(data, input$v1, type = '申請入學')
+    }
+    else if(input$v1 == "醫學院"){
+      piechartmaker(data, input$v1, type = '申請入學')
+    }
+  })
+  #顯示:只選擇各院後之圖片(沒選擇系所)
+  output$piechart3 <- renderPlot({
+    #if(!is.null(input$v2)==is.null(input$v2)){}   observe?
+    if(input$v1 == "傳播學院"){
+      piechartmaker(data, input$v1, type = '指考')
+    }
+    else if(input$v1 == "外國語文學院"){
+      piechartmaker(data, input$v1, type = '指考')
+    }
+    else if(input$v1 == "教育學院"){
+      piechartmaker(data, input$v1, type = '指考')
+    }
+    else if(input$v1 == "文學院"){
+      piechartmaker(data, input$v1, type = '指考')
+    }
+    else if(input$v1 == "民生學院"){
+      piechartmaker(data, input$v1, type = '指考')
+    }
+    else if(input$v1 == "法律學院"){
+      piechartmaker(data, input$v1, type = '指考')
+    }
+    else if(input$v1 == "理工學院"){
+      piechartmaker(data, input$v1, type = '指考')
+    }
+    else if(input$v1 == "社會科學院"){
+      piechartmaker(data, input$v1, type = '指考')
+    }
+    else if(input$v1 == "管理學院"){
+      img(height = 600, width = 720, src = "管理學院學生成績分布.jpeg")
+    }
+    else if(input$v1 == "織品服裝學院"){
+      img(height = 600, width = 720, src = "織品服裝學院學生成績分布.jpeg")
+    }
+    else if(input$v1 == "藝術學院"){
+      img(height = 600, width = 720, src = "藝術學院學生成績分布.jpeg")
+    }
+    else if(input$v1 == "醫學院"){
+      img(height = 600, width = 720, src = "醫學院學生成績分布.jpeg")
+    }
   })
   #解釋:各院之分析結果
   output$explanationOfCollege <- renderText({
     if(input$v1 == "傳播學院"){            
-      paste("傳播學院110學年度入學三大入學生學業表現可知，110學年度入學生總平均在80分以上之比例高低為：繁星推薦(92%)>個人申請(49%)>指考分發(47%)，可推論110學年度傳播學院繁星推薦入學的學生學業表現相對優良。")
+      paste('<span style=\"color:red\">傳播學院</span>',"110學年度入學三大入學生學業表現可知，110學年度入學生總平均在80分以上之比例高低為：繁星推薦(92%)>個人申請(49%)>指考分發(47%)，可推論110學年度傳播學院繁星推薦入學的學生學業表現相對優良。")
     }
     else if(input$v1 == "外國語文學院"){
       paste("外國語文學院110學年度入學三大入學生學業表現可知，110學年度入學生總平均在80分以上之比例高低為：繁星推薦(69%)>個人申請(48%)>指考分發(38%)，可推論110學年度外國語文學院繁星推薦入學的學生學業表現相對優良。")
@@ -191,7 +543,6 @@ server <- function(input, output, session){
       paste("醫學院110學年度入學三大入學生學業表現可知，110學年度入學生總平均在80分以上之比例高低為：繁星推薦(84%)>個人申請(68%)>指考分發(66%)，可推論110學年度醫學院繁星推薦入學的學生學業表現相對優良。")
     }
   })
-  
   #顯示:選擇的院所+系所後之圖片
   output$imageOfDepartment <- renderUI({
     if(input$v2 == "影像傳播學系"){            
@@ -541,9 +892,10 @@ server <- function(input, output, session){
     }
     
   })
+  
 }
 shinyApp(ui = ui, server = server)
 #目前缺少的: 
 #1. 美化
 #2. 版面設計
-#3. 當今天使用者有不同權限時，該如何輸出相對應的圖片
+#3. 動態圖
