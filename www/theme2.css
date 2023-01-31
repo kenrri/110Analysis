@@ -1,0 +1,7 @@
+body{
+	background-image: url(圖片.png);
+	background-size: 33%;
+	background-position: left bottom;
+	background-attachment: fixed;
+	background-repeat: no-repeat;
+}
