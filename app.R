@@ -41,7 +41,7 @@ ui <- navbarPage(
   sidebarLayout(
     sidebarPanel(
       fluidRow(
-        column(2,
+        column(4,
                checkboxInput("v0", label = "全校分析結果",value=FALSE)),
         column(6,
                selectInput("v2", label = "請選擇系所", choices = 系所, multiple = FALSE)),
