@@ -41,7 +41,7 @@ ui <- navbarPage(
   sidebarLayout(
     sidebarPanel(
       fluidRow(
-        column(4,
+        column(6,
                checkboxInput("v0", label = "全校分析結果",value=FALSE)),
         column(6,
                selectInput("v2", label = "請選擇系所", choices = 系所, multiple = FALSE)),
@@ -49,7 +49,6 @@ ui <- navbarPage(
                selectInput("v1", label = "請選擇院所", choices = 院, multiple = FALSE)),
         textOutput("selected_v1"),#在底下server內新增對應Rcode
         textOutput("selected_v2"),#在底下server內新增對應Rcode
-        textOutput("check_v0")
       )
     ),
     mainPanel(
