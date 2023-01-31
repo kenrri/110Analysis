@@ -382,7 +382,7 @@ server <- function(input, output, session){
   })
   output$explanationOfAll <- renderText({
     if(input$v0=="TRUE"){
-      paste("全校110學年度入學三大入學生學業表現可知，平均在80分以上之比例高低為：繁星推薦(66%)>個人申請(42%)>指考分發(34%)，可推論110學年度傳播學院繁星推薦入學的學生學業表現相對優良。")
+      paste("全校110學年度入學三大入學生學業表現可知，平均在80分以上之比例高低為：繁星推薦(66%)>個人申請(42%)>指考分發(34%)，可推論110學年度全校之繁星推薦入學的學生學業表現相對優良。")
     }
   })
   output$piechart1 <- renderPlot({
