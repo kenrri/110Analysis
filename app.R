@@ -5,6 +5,15 @@ library(ggplot2)
 library(ggrepel)
 library(grid)
 library(gridExtra)
+library(devtools)
+library(highcharter)
+library(billboarder)
+library(tidyverse)
+library(RColorBrewer)
+#for(i in c(1:57))
+#devtools::install_github('jbkunst/highcharter')
+#devtools::install_github('dreamRs/billboarder')
+src = "//Users//guanruilin//Documents//Rshiny//data//final3.csv"
 
 院 <- c("請選擇院所", "傳播學院", "外國語文學院", "教育學院", "文學院", "民生學院", "法律學院", "理工學院", "社會科學院", "管理學院", "織品服裝學院", "藝術學院", "醫學院")
 系 <- c("請選擇系所")
@@ -26,7 +35,6 @@ library(gridExtra)
 織品服裝學院系 <- c("織品服裝學系織品設計組", "織品服裝學系服飾設計組", "織品服裝學系織品服飾行銷組")
 藝術學院系 <- c("音樂學系", "應用美術學系", "景觀設計學系")
 醫學院系 <- c("醫學系", "護理學系", "公共衛生學系", "臨床心理學系", "職能治療學系", "呼吸治療學系")
-
 # Define UI ----
 ui <- navbarPage(
   "各系110年度三大入學管道學業表現",
@@ -42,273 +50,105 @@ ui <- navbarPage(
     sidebarPanel(
       fluidRow(
         column(6,
-               checkboxInput("v0", label = "全校分析結果",value=FALSE)),
-        column(6,
-               selectInput("v2", label = "請選擇系所", choices = 系所, multiple = FALSE)),
+               checkboxInput("v0", label = "全校分析結果",value=FALSE))),
+      fluidRow(
         column(6,
                selectInput("v1", label = "請選擇院所", choices = 院, multiple = FALSE)),
+        column(6,
+               selectInput("v2", label = "請選擇系所", choices = 系所, multiple = FALSE, selected = " ")),
         textOutput("selected_v1"),#在底下server內新增對應Rcode
         textOutput("selected_v2"),#在底下server內新增對應Rcode
-      )
+      ),
+      # fluidRow(
+      #   column(6,
+      #     submitButton("分析結果")
+      #   )
+      # )
     ),
     mainPanel(
       h3("本頁面探討全校三大入學管道之學生的總平均學業表現，將學生學業平均分數分成以下五大級距，根據所得出的比例數據做分析。"),
       tabsetPanel(
-        tabPanel("全校之分析結果",uiOutput("imageOfAll"),textOutput("explanationOfAll")),
-        tabPanel("各院之分析結果",fluidRow(column(4,plotOutput("piechart1")),column(4,plotOutput("piechart2")),column(4,plotOutput("piechart3"))),htmlOutput("explanationOfCollege")),
-        tabPanel("該院各系所的分析結果",uiOutput("imageOfDepartment"),textOutput("explanationOfDepartment"))
+        tabPanel("全校之分析結果",
+                 fluidRow(
+                          column(4,uiOutput("imageOfAll1")),
+                          column(4,uiOutput("imageOfAll2")),
+                          column(4,uiOutput("imageOfAll3"))),
+                 textOutput("explanationOfAll")),
+        tabPanel("各院之分析結果",
+                 fluidRow(
+                          column(4,uiOutput("imageOfCol1")),
+                          column(4,uiOutput("imageOfCol2")),
+                          column(4,uiOutput("imageOfCol3"))),
+                 textOutput("explanationOfCollege")),
+        tabPanel("該院各系所的分析結果",
+                 fluidRow(
+                   column(4,uiOutput("imageOfDepartment1")),
+                   column(4,uiOutput("imageOfDepartment2")),
+                   column(4,uiOutput("imageOfDepartment3"))),
+                   textOutput("explanationOfDepartment"))
       )
     )
   )
 )
-
 server <- function(input, output, session){
   #自動更新院選項
   #observe({
-    #if(!is.null(input$v2))
-      #updateSelectInput(session, "v1", 
-                        #choices = 院[!(院 %in% input$v2)], 
-                        #selected = isolate(input$v1))
+  #if(!is.null(input$v2))
+  #updateSelectInput(session, "v1", 
+  #choices = 院[!(院 %in% input$v2)], 
+  #selected = isolate(input$v1))
   #})
   #自動更新系選項
   observe({
-    if((input$v2)=="影像傳播學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    
-    else if((input$v2)=="新聞傳播學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="廣告傳播學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="英國語文學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="德語語文學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="法國語文學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="西班牙語文學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="日本語文學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="義大利語文學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="體育學系體育學組")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="體育學系運動競技組")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="體育學系運動健康管理組")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="圖書資訊學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="教育領導與科技發展學士學位學程")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="中國文學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="歷史學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="哲學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="兒童與家庭學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="餐旅管理學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="食品科學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="營養科學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="法律學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="財經法律學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="學士後法律學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="數學系應用數學組")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="數學系資訊數學組")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="物理學系光電物理組")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="學士後法律學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="物理學系物理組")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="化學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="生命科學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="資訊工程學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="電機工程學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="醫學資訊與創新應用學士學位學程")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="人工智慧與資訊安全學士學位學程")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="社會學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="社會工作學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="經濟學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="宗教學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="心理學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="天主教研修學士學位學程")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="企業管理學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="會計學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="統計資訊學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="金融與國際企業學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="資訊管理學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="織品服裝學系織品設計組")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="織品服裝學系服飾設計組")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="織品服裝學系織品服飾行銷組")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="音樂學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="心理學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="應用美術學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="景觀設計學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="醫學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="護理學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="公共衛生學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="臨床心理學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="職能治療學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
-    else if((input$v2)=="呼吸治療學系")
-      updateSelectInput(session, "v1", 
-                        choices = 院, 
-                        selected = isolate(input$v1))
+    if(!is.null(input$v1))
+      if((input$v1)=="傳播學院")
+        updateSelectInput(session, "v2", 
+                          choices = 傳播學院系[!(傳播學院系 %in% input$v1)], 
+                          selected = isolate(input$v2))
+    else if((input$v1)=="外國語文學院")
+      updateSelectInput(session, "v2", 
+                        choices = 外國語文學院系[!(外國語文學院系 %in% input$v1)], 
+                        selected = isolate(input$v2))
+    else if((input$v1)=="教育學院")
+      updateSelectInput(session, "v2", 
+                        choices = 教育學院系[!(教育學院系 %in% input$v1)], 
+                        selected = isolate(input$v2))
+    else if((input$v1)=="文學院")
+      updateSelectInput(session, "v2", 
+                        choices = 文學院系[!(文學院系 %in% input$v1)], 
+                        selected = isolate(input$v2))
+    else if((input$v1)=="民生學院")
+      updateSelectInput(session, "v2", 
+                        choices = 民生學院系[!(民生學院系 %in% input$v1)], 
+                        selected = isolate(input$v2))
+    else if((input$v1)=="法律學院")
+      updateSelectInput(session, "v2", 
+                        choices = 法律學院系[!(法律學院系 %in% input$v1)], 
+                        selected = isolate(input$v2))
+    else if((input$v1)=="理工學院")
+      updateSelectInput(session, "v2", 
+                        choices = 理工學院系[!(理工學院系 %in% input$v1)], 
+                        selected = isolate(input$v2))
+    else if((input$v1)=="社會科學院")
+      updateSelectInput(session, "v2", 
+                        choices = 社會科學院系[!(社會科學院系 %in% input$v1)], 
+                        selected = isolate(input$v2))
+    else if((input$v1)=="管理學院")
+      updateSelectInput(session, "v2", 
+                        choices = 管理學院系[!(管理學院系 %in% input$v1)], 
+                        selected = isolate(input$v2))
+    else if((input$v1)=="織品服裝學院")
+      updateSelectInput(session, "v2", 
+                        choices = 織品服裝學院系[!(織品服裝學院系 %in% input$v1)], 
+                        selected = isolate(input$v2))
+    else if((input$v1)=="藝術學院")
+      updateSelectInput(session, "v2", 
+                        choices = 藝術學院系[!(藝術學院系 %in% input$v1)], 
+                        selected = isolate(input$v2))
+    else if((input$v1)=="醫學院")
+      updateSelectInput(session, "v2", 
+                        choices = 醫學院系[!(醫學院系 %in% input$v1)], 
+                        selected = isolate(input$v2))
   })
   #取得使用者所選取的院所
   output$selected_v2 <- renderText({ 
@@ -317,11 +157,10 @@ server <- function(input, output, session){
   output$selected_v1 <- renderText({ 
     paste("您已選擇:",input$v1)
   })
-  
   #the 1st one is choosen and the 2nd one is absent
   #if((is.null(input$v1)==FALSE) & (is.null(input$v2)==TRUE)){
-  setwd("C:\\Apps\\Rshiny\\招生戰情室")
-  data <- read.csv('110學生成績資料.csv')
+  setwd("//Users//guanruilin//Documents//Rshiny//data")
+  data <- read.csv('final2.csv')
   piechartmaker <- function(data, department, type) {
     data <- data %>%
       filter(學院名 == department)
@@ -375,138 +214,508 @@ server <- function(input, output, session){
     return(g)
   }
   #顯示:只選擇各院後之圖片(沒選擇系所)
-  output$imageOfAll <- renderUI({
+
+  #全校
+  output$imageOfAll1 <- renderUI({
     if(input$v0=="TRUE"){
-      img(height = 600, width = 720, src = "全校學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum >= '1', departmentNum <= '57')
+      cc1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(cc1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
+    }
+  })
+  output$imageOfAll2 <- renderUI({
+    if(input$v0=="TRUE"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum >= '1', departmentNum <= '57')
+      cc2 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(cc2) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+  })
+  output$imageOfAll3 <- renderUI({
+    if(input$v0=="TRUE"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum >= '1', departmentNum <= '57')
+      cc3 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(cc3) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
     }
   })
   output$explanationOfAll <- renderText({
     if(input$v0=="TRUE"){
-      paste("全校110學年度入學三大入學生學業表現可知，平均在80分以上之比例高低為：繁星推薦(66%)>個人申請(42%)>指考分發(34%)，可推論110學年度全校之繁星推薦入學的學生學業表現相對優良。")
+      paste("全校110學年度入學三大入學生學業表現可知，平均在80分以上之比例高低為：繁星推薦(66%)>個人申請(42%)>指考分發(34%)，可推論110學年度傳播學院繁星推薦入學的學生學業表現相對優良。")
     }
   })
-  output$piechart1 <- renderPlot({
-    #if(!is.null(input$v2)==is.null(input$v2)){}   observe?
+  #院
+  output$imageOfCol1 <- renderUI({
     if(input$v1 == "傳播學院"){
-      piechartmaker(data, input$v1, type = '繁星推薦')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('IG'))
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+      #繁星篩選
+      z1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      #繁星做圖
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v1 == "外國語文學院"){
-      piechartmaker(data, input$v1, type = '繁星推薦')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('FG'))
+      z1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v1 == "教育學院"){
-      piechartmaker(data, input$v1, type = '繁星推薦')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('KG'))
+      z1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v1 == "文學院"){
-      piechartmaker(data, input$v1, type = '繁星推薦')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('CG'))
+      z1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
+      
     }
     else if(input$v1 == "民生學院"){
-      piechartmaker(data, input$v1, type = '繁星推薦')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('HG'))
+      z1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
+      
     }
     else if(input$v1 == "法律學院"){
-      piechartmaker(data, input$v1, type = '繁星推薦')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('JG'))
+      z1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v1 == "理工學院"){
-      piechartmaker(data, input$v1, type = '繁星推薦')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('SG'))
+      z1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
+      
     }
     else if(input$v1 == "社會科學院"){
-      piechartmaker(data, input$v1, type = '繁星推薦')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('WG'))
+      z1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
+      
     }
     else if(input$v1 == "管理學院"){
-      piechartmaker(data, input$v1, type = '繁星推薦')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('MG'))
+      z1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
+      
     }
     else if(input$v1 == "織品服裝學院"){
-      piechartmaker(data, input$v1, type = '繁星推薦')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('OG'))
+      z1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
+      
     }
     else if(input$v1 == "藝術學院"){
-      piechartmaker(data, input$v1, type = '繁星推薦')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('AG'))
+      z1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
+      
     }
     else if(input$v1 == "醫學院"){
-      piechartmaker(data, input$v1, type = '繁星推薦')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('DG'))
+      z1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
+      
     }
   })
-  output$piechart2 <- renderPlot({
-    #if(!is.null(input$v2)==is.null(input$v2)){}   observe?
+  output$imageOfCol2 <- renderUI({
     if(input$v1 == "傳播學院"){
-      piechartmaker(data, input$v1, type = '申請入學')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('IG'))
+      z2 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z2) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
     }
     else if(input$v1 == "外國語文學院"){
-      piechartmaker(data, input$v1, type = '申請入學')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('FG'))
+      z2 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z2) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
     }
     else if(input$v1 == "教育學院"){
-      piechartmaker(data, input$v1, type = '申請入學')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('KG'))
+      z2 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z2) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
     }
     else if(input$v1 == "文學院"){
-      piechartmaker(data, input$v1, type = '申請入學')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('CG'))
+      z2 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z2) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
     }
     else if(input$v1 == "民生學院"){
-      piechartmaker(data, input$v1, type = '申請入學')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('HG'))
+      z2 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z2) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
     }
     else if(input$v1 == "法律學院"){
-      piechartmaker(data, input$v1, type = '申請入學')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('JG'))
+      z2 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z2) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
     }
     else if(input$v1 == "理工學院"){
-      piechartmaker(data, input$v1, type = '申請入學')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('SG'))
+      z2 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z2) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
     }
     else if(input$v1 == "社會科學院"){
-      piechartmaker(data, input$v1, type = '申請入學')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('WG'))
+      z2 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z2) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
     }
     else if(input$v1 == "管理學院"){
-      piechartmaker(data, input$v1, type = '申請入學')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('MG'))
+      z2 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z2) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
     }
     else if(input$v1 == "織品服裝學院"){
-      piechartmaker(data, input$v1, type = '申請入學')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('OG'))
+      z2 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z2) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
     }
     else if(input$v1 == "藝術學院"){
-      piechartmaker(data, input$v1, type = '申請入學')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('AG'))
+      z2 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z2) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
     }
     else if(input$v1 == "醫學院"){
-      piechartmaker(data, input$v1, type = '申請入學')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('DG'))
+      z2 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z2) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
     }
   })
-  #顯示:只選擇各院後之圖片(沒選擇系所)
-  output$piechart3 <- renderPlot({
-    #if(!is.null(input$v2)==is.null(input$v2)){}   observe?
+  output$imageOfCol3 <- renderUI({
     if(input$v1 == "傳播學院"){
-      piechartmaker(data, input$v1, type = '指考')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('IG'))
+      z3 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z3) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
     }
     else if(input$v1 == "外國語文學院"){
-      piechartmaker(data, input$v1, type = '指考')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('FG'))
+      z3 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z3) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
     }
     else if(input$v1 == "教育學院"){
-      piechartmaker(data, input$v1, type = '指考')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('KG'))
+      z3 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z3) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
     }
     else if(input$v1 == "文學院"){
-      piechartmaker(data, input$v1, type = '指考')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('CG'))
+      z3 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z3) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
     }
     else if(input$v1 == "民生學院"){
-      piechartmaker(data, input$v1, type = '指考')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('HG'))
+      z3 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z3) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
     }
     else if(input$v1 == "法律學院"){
-      piechartmaker(data, input$v1, type = '指考')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('JG'))
+      z3 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z3) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
     }
     else if(input$v1 == "理工學院"){
-      piechartmaker(data, input$v1, type = '指考')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('SG'))
+      z3 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z3) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
     }
     else if(input$v1 == "社會科學院"){
-      piechartmaker(data, input$v1, type = '指考')
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('WG'))
+      z3 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z3) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
     }
     else if(input$v1 == "管理學院"){
-      img(height = 600, width = 720, src = "管理學院學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('MG'))
+      z3 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z3) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
     }
     else if(input$v1 == "織品服裝學院"){
-      img(height = 600, width = 720, src = "織品服裝學院學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('OG'))
+      z3 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z3) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
     }
     else if(input$v1 == "藝術學院"){
-      img(height = 600, width = 720, src = "藝術學院學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('AG'))
+      z3 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z3) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
     }
     else if(input$v1 == "醫學院"){
-      img(height = 600, width = 720, src = "醫學院學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(院別碼 %in% c('DG'))
+      z3 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z3) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
     }
   })
-  #解釋:各院之分析結果
   output$explanationOfCollege <- renderText({
     if(input$v1 == "傳播學院"){            
-      paste('<span style=\"color:red\">傳播學院</span>',"110學年度入學三大入學生學業表現可知，110學年度入學生總平均在80分以上之比例高低為：繁星推薦(92%)>個人申請(49%)>指考分發(47%)，可推論110學年度傳播學院繁星推薦入學的學生學業表現相對優良。")
+      paste("110學年度入學三大入學生學業表現可知，110學年度入學生總平均在80分以上之比例高低為：繁星推薦(92%)>個人申請(49%)>指考分發(47%)，可推論110學年度傳播學院繁星推薦入學的學生學業表現相對優良。")
     }
     else if(input$v1 == "外國語文學院"){
       paste("外國語文學院110學年度入學三大入學生學業表現可知，110學年度入學生總平均在80分以上之比例高低為：繁星推薦(69%)>個人申請(48%)>指考分發(38%)，可推論110學年度外國語文學院繁星推薦入學的學生學業表現相對優良。")
@@ -542,181 +751,2145 @@ server <- function(input, output, session){
       paste("醫學院110學年度入學三大入學生學業表現可知，110學年度入學生總平均在80分以上之比例高低為：繁星推薦(84%)>個人申請(68%)>指考分發(66%)，可推論110學年度醫學院繁星推薦入學的學生學業表現相對優良。")
     }
   })
-  #顯示:選擇的院所+系所後之圖片
-  output$imageOfDepartment <- renderUI({
+  #系
+  output$imageOfDepartment1 <- renderUI({
     if(input$v2 == "影像傳播學系"){            
-      img(height = 600, width = 720, src = "影像傳播學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('5'))
+      e1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(e1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
+     
     }                                        
     else if(input$v2 == "新聞傳播學系"){
-      img(height = 600, width = 720, src = "新聞傳播學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('6'))
+      f1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(f1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "廣告傳播學系"){
-      img(height = 600, width = 720, src = "廣告傳播學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('7'))
+      g1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(g1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "英國語文學系"){
-      img(height = 600, width = 720, src = "英國語文學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('11'))
+      k1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "德語語文學系"){
-      img(height = 600, width = 720, src = "德語語文學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('16'))
+      p1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(p1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "法國語文學系"){
-      img(height = 600, width = 720, src = "法國語文學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('12'))
+      l1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(l1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "西班牙語文學系"){
-      img(height = 600, width = 720, src = "西班牙語文學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('13'))
+      m1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(m1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "日本語文學系"){
-      img(height = 600, width = 720, src = "日本語文學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('14'))
+      n1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(n1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "義大利語文學系"){
-      img(height = 600, width = 720, src = "義大利語文學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('15'))
+      o1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(o1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "體育學系體育學組"){
-      img(height = 600, width = 720, src = "體育學系體育學組學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('8'))
+      h1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(h1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "體育學系運動競技組"){
-      img(height = 600, width = 720, src = "體育學系運動競技組學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('9'))
+      i1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(i1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "體育學系運動健康管理組"){
-      img(height = 600, width = 720, src = "體育學系運動健康管理組學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('10'))
+      j1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(j1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "圖書資訊學系"){
-      img(height = 600, width = 720, src = "圖書資訊學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('2'))
+      d1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(d1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "教育領導與科技發展學士學位學程"){
-      img(height = 600, width = 720, src = "教育領導與科技發展學士學位學程學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('55'))
+      bc1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(bc1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "中國文學系"){
-      img(height = 600, width = 720, src = "中國文學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('1'))
+      a1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(a1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "歷史學系"){
-      img(height = 600, width = 720, src = "歷史學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('2'))
+      b1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(b1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "哲學系"){
-      img(height = 600, width = 720, src = "哲學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('2'))
+      c1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(c1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "兒童與家庭學系"){
-      img(height = 600, width = 720, src = "兒童與家庭學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('30'))
+      ad1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ad1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "餐旅管理學系"){
-      img(height = 600, width = 720, src = "餐旅管理學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('29'))
+      ac1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ac1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "食品科學系"){
-      img(height = 600, width = 720, src = "食品科學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('45'))
+      as1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(as1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "營養科學系"){
-      img(height = 600, width = 720, src = "營養科學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('46'))
+      at1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(at1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "法律學系"){
-      img(height = 600, width = 720, src = "法律學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('31'))
+      ae1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ae1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "財經法律學系"){
-      img(height = 600, width = 720, src = "財經法律學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('35'))
+      ai1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ai1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "學士後法律學系"){
-      img(height = 600, width = 720, src = "學士後法律學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('36'))
+      aj1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(aj1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "數學系應用數學組"){
-      img(height = 600, width = 720, src = "數學系應用數學組學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('18'))
+      r1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(r1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "數學系資訊數學組"){
-      img(height = 600, width = 720, src = "數學系資訊數學組學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('17'))
+      q1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(q1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "物理學系光電物理組"){
-      img(height = 600, width = 720, src = "物理學系光電物理組學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('28'))
+      ab1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ab1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "物理學系物理組"){
-      img(height = 600, width = 720, src = "物理學系物理組學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('27'))
+      aa1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(aa1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "化學系"){
-      img(height = 600, width = 720, src = "化學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('19'))
+      s1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(s1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "生命科學系"){
-      img(height = 600, width = 720, src = "生命科學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('26'))
+      z1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "資訊工程學系"){
-      img(height = 600, width = 720, src = "資訊工程學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('25'))
+      y1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(y1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "電機工程學系"){
-      img(height = 600, width = 720, src = "電機工程學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('24'))
+      x1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(x1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
+      
     }
     else if(input$v2 == "醫學資訊與創新應用學士學位學程"){
-      img(height = 600, width = 720, src = "醫學資訊與創新應用學士學位學程學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('56'))
+      bd1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(x1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
+      
     }
     else if(input$v2 == "人工智慧與資訊安全學士學位學程"){
-      img(height = 600, width = 720, src = "人工智慧與資訊安全學士學位學程學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('57'))
+      be1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(be1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "社會學系"){
-      img(height = 600, width = 720, src = "社會學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('32'))
+      af1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(af1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
+     
     }
     else if(input$v2 == "社會工作學系"){
-      img(height = 600, width = 720, src = "社會工作學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('33'))
+      ag1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ag1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "經濟學系"){
-      img(height = 600, width = 720, src = "經濟學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('34'))
+      ah1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ah1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
+      
     }
     else if(input$v2 == "宗教學系"){
-      img(height = 600, width = 720, src = "宗教學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('47'))
+      au1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(au1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "心理學系"){
-      img(height = 600, width = 720, src = "心理學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('20'))
+      t1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(t1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "天主教研修學士學位學程"){
-      img(height = 600, width = 720, src = "天主教研修學士學位學程學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('54'))
+      bb1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(bb1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "企業管理學系"){
-      img(height = 600, width = 720, src = "企業管理學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('37'))
+      ak1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ak1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "會計學系"){
-      img(height = 600, width = 720, src = "會計學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('38'))
+      al1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(al1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "統計資訊學系"){
-      img(height = 600, width = 720, src = "統計資訊學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('41'))
+      ao1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ao1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "金融與國際企業學系"){
-      img(height = 600, width = 720, src = "金融與國際企業學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('40'))
+      an1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(an1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "資訊管理學系"){
-      img(height = 600, width = 720, src = "資訊管理學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('39'))
+      am1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(am1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "織品服裝學系織品設計組"){
-      img(height = 600, width = 720, src = "織品服裝學系織品設計組學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('21'))
+      u1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(u1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "織品服裝學系服飾設計組"){
-      img(height = 600, width = 720, src = "織品服裝學系服飾設計組學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('23'))
+      w1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(w1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "織品服裝學系織品服飾行銷組"){
-      img(height = 600, width = 720, src = "織品服裝學系織品服飾行銷組學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('22'))
+      v1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(v1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "音樂學系"){
-      img(height = 600, width = 720, src = "音樂學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('42'))
+      ap1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ap1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "應用美術學系"){
-      img(height = 600, width = 720, src = "應用美術學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('43'))
+      aq1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(aq1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "景觀設計學系"){
-      img(height = 600, width = 720, src = "景觀設計學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('44'))
+      ar1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ar1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "醫學系"){
-      img(height = 600, width = 720, src = "醫學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('50'))
+      ax1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ax1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "護理學系"){
-      img(height = 600, width = 720, src = "護理學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('48'))
+      av1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(av1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "公共衛生學系"){
-      img(height = 600, width = 720, src = "公共衛生學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('49'))
+      aw1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(aw1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "臨床心理學系"){
-      img(height = 600, width = 720, src = "臨床心理學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('51'))
+      ay1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ay1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "職能治療學系"){
-      img(height = 600, width = 720, src = "職能治療學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('52'))
+      az1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(az1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
     else if(input$v2 == "呼吸治療學系"){
-      img(height = 600, width = 720, src = "呼吸治療學系學生成績分布.jpeg")
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('53'))
+      ba1 = x %>% filter(入學管道碼 %in% c('B6C')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ba1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "繁星推薦", position = "center")
     }
   })
-  #解釋:各院的各系之分析結果
+  output$imageOfDepartment2 <- renderUI({
+    if(input$v2 == "影像傳播學系"){            
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('5'))
+      e1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(e1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }                                        
+    else if(input$v2 == "新聞傳播學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('6'))
+      f1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(f1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "廣告傳播學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('7'))
+      g1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(g1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "英國語文學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('11'))
+      k1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(k1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "德語語文學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('16'))
+      p1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(p1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "法國語文學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('12'))
+      l1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(l1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "西班牙語文學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('13'))
+      m1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(m1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "日本語文學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('14'))
+      n1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(n1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "義大利語文學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('15'))
+      o1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(a1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "體育學系體育學組"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('8'))
+      h1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(h1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "體育學系運動競技組"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('9'))
+      i1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(i1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "體育學系運動健康管理組"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('10'))
+      j1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(j1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "圖書資訊學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('2'))
+      d1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(d1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "教育領導與科技發展學士學位學程"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('55'))
+      bc1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(bc1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "中國文學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('1'))
+      a1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(a1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "歷史學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('2'))
+      b1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(b1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "哲學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('2'))
+      c1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(c1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "兒童與家庭學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('30'))
+      ad1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ad1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "餐旅管理學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('29'))
+      ac1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ac2) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "食品科學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('45'))
+      as1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(as1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "營養科學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('46'))
+      at1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(at1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "法律學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('31'))
+      ae1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ae1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "財經法律學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('35'))
+      ai1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ai1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "學士後法律學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('36'))
+      aj1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(aj1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "數學系應用數學組"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('18'))
+      r1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(r1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "數學系資訊數學組"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('17'))
+      q1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(q1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "物理學系光電物理組"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('28'))
+      ab1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ab1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "物理學系物理組"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('27'))
+      aa1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(aa1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "化學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('19'))
+      s1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(s1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "生命科學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('26'))
+      z1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "資訊工程學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('25'))
+      y1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(y1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "電機工程學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('24'))
+      x1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(x1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "醫學資訊與創新應用學士學位學程"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('56'))
+      bd1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(bd1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "人工智慧與資訊安全學士學位學程"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('57'))
+      be1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(be1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "社會學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('32'))
+      af1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(af1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "社會工作學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('33'))
+      ag1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ag1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "經濟學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('34'))
+      ah1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ah1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "宗教學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('47'))
+      au1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(au1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "心理學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('20'))
+      t1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(t1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "天主教研修學士學位學程"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('54'))
+      bb1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(bb1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "企業管理學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('37'))
+      ak1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ak1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "會計學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('38'))
+      al1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(al1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "統計資訊學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('41'))
+      ao1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ao1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "金融與國際企業學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('40'))
+      an1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(an1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "資訊管理學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('39'))
+      am1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(am1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "織品服裝學系織品設計組"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('21'))
+      u1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(u1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "織品服裝學系服飾設計組"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('23'))
+      w1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(w1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "織品服裝學系織品服飾行銷組"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('22'))
+      v1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(v1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "音樂學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('42'))
+      ap1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ap1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "應用美術學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('43'))
+      aq1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(aq1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "景觀設計學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('44'))
+      ar1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ar1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "醫學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('50'))
+      ax1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ax1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "護理學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('48'))
+      av1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(av1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "公共衛生學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('49'))
+      aw1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(aw1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "臨床心理學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('51'))
+      ay1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ay1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "職能治療學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('52'))
+      az1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(az1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+    else if(input$v2 == "呼吸治療學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('53'))
+      ba1 = x %>% filter(入學管道碼 %in% c('B2D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ba1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "個人申請", position = "center")
+    }
+  })
+  output$imageOfDepartment3 <- renderUI({
+    if(input$v2 == "影像傳播學系"){            
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('5'))
+      e1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(e1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }                                        
+    else if(input$v2 == "新聞傳播學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('6'))
+      f1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(f1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "廣告傳播學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('7'))
+      g1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(g1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "英國語文學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('11'))
+      k1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(k1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "德語語文學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('16'))
+      p1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(p1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "法國語文學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('12'))
+      l1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(l1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "西班牙語文學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('13'))
+      m1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(m1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "日本語文學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('14'))
+      n1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(n1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "義大利語文學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('15'))
+      o1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(o1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "體育學系體育學組"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('8'))
+      h1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(h1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "體育學系運動競技組"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('9'))
+      i1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(i1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "體育學系運動健康管理組"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('10'))
+      j1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(j1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "圖書資訊學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('2'))
+      d1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(d1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "教育領導與科技發展學士學位學程"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('55'))
+      bc1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(bc1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "中國文學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('1'))
+      a1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(a1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "歷史學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('2'))
+      b1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(b1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "哲學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('2'))
+      c1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(c1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "兒童與家庭學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('30'))
+      ad1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ad1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "餐旅管理學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('29'))
+      ac1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ac1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "食品科學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('45'))
+      as1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(as1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "營養科學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('46'))
+      at1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(at1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "法律學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('31'))
+      ae1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ae1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "財經法律學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('35'))
+      ai1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ai1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "學士後法律學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('36'))
+      aj1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(aj1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "數學系應用數學組"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('18'))
+      r1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(r1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "數學系資訊數學組"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('17'))
+      q1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(q1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "物理學系光電物理組"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('28'))
+      ab1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ab1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "物理學系物理組"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('27'))
+      aa1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(aa1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "化學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('19'))
+      s1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(s1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "生命科學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('26'))
+      z1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(z1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "資訊工程學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('25'))
+      y1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(y1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "電機工程學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('24'))
+      x1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(x1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "醫學資訊與創新應用學士學位學程"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('56'))
+      bd1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(bd1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "人工智慧與資訊安全學士學位學程"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('57'))
+      be1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(be1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "社會學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('32'))
+      af1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(af1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "社會工作學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('33'))
+      ag1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ag1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "經濟學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('34'))
+      ah1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ah1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "宗教學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('47'))
+      au1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(au1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "心理學系"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('20'))
+      t1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(t1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "天主教研修學士學位學程"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('54'))
+      bb1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(bb1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "企業管理學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('37'))
+      ak1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ak1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "會計學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('38'))
+      al1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(al1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "統計資訊學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('41'))
+      ao1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ao1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "金融與國際企業學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('40'))
+      an1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(an1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "資訊管理學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('39'))
+      am1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(am1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "織品服裝學系織品設計組"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('21'))
+      u1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(u1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "織品服裝學系服飾設計組"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('23'))
+      w1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(w1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "織品服裝學系織品服飾行銷組"){
+      x = readr::read_csv(src) %>%
+        #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+        filter(departmentNum %in% c('22'))
+      v1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(v1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "音樂學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('42'))
+      ap1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ap1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "應用美術學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('43'))
+      aq1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(aq1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "景觀設計學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('44'))
+      ar1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ar1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "醫學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('50'))
+      ax1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ax1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "護理學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('48'))
+      av1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(av1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "公共衛生學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('49'))
+      aw1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(aw1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "臨床心理學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('51'))
+      ay1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ay1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "職能治療學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('52'))
+      az1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(az1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+    else if(input$v2 == "呼吸治療學系"){
+      x = readr::read_csv(src) %>%
+        filter(departmentNum %in% c('53'))
+      ba1 = x %>% filter(入學管道碼 %in% c('B1D')) %>%
+        group_by(scoreStratified) %>%
+        summarise(CNT = n())
+      billboarder(height = 250, width = 280) %>% 
+        bb_piechart(ba1) %>%
+        bb_legend(position = 'right') %>%
+        bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+        bb_title(text = "指考", position = "center")
+    }
+  })
   output$explanationOfDepartment <- renderText({
     if(input$v2 == "影像傳播學系"){            
       paste("影像傳播學系110學年度入學三大入學生學業表現可知，110學年度入學生總平均在80分以上之比例高低為：繁星推薦(75%)>指考分發(67%)>個人申請(43%)，可推論110學年度影像傳播學系繁星推薦入學的學生學業表現相對優良。")
@@ -891,10 +3064,5 @@ server <- function(input, output, session){
     }
     
   })
-  
 }
 shinyApp(ui = ui, server = server)
-#目前缺少的: 
-#1. 美化
-#2. 版面設計
-#3. 動態圖
