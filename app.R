@@ -10,9 +10,6 @@ library(highcharter)
 library(billboarder)
 library(tidyverse)
 library(RColorBrewer)
-#for(i in c(1:57))
-#devtools::install_github('jbkunst/highcharter')
-#devtools::install_github('dreamRs/billboarder')
 #src = "C:\\Users\\Jerry\\Desktop\\school\\OldData\\final3.csv"
 src = "//Users//guanruilin//Documents//Rshiny//data//final3.csv"
 
