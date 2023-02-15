@@ -1,4 +1,5 @@
 library(shiny)
+library(shinydashboard)
 library(shinythemes)
 library(tidyverse)
 library(ggplot2)
@@ -10,93 +11,102 @@ library(highcharter)
 library(billboarder)
 library(tidyverse)
 library(RColorBrewer)
-#for(i in c(1:57))
-#devtools::install_github('jbkunst/highcharter')
-#devtools::install_github('dreamRs/billboarder')
-#src = "C:\\Users\\Jerry\\Desktop\\school\\OldData\\final3.csv"
-src = "//Users//guanruilin//Documents//Rshiny//data//final3.csv"
-#src = "C:\\Users\\user\\Dropbox\\我的電腦 (LAPTOP-O5VTIAH6)\\Desktop\\招生戰情室2_7\\final3.csv"
+setwd("C:\\Apps\\Rshiny\\data")
+#setwd("C:\\Users\\Jerry\\Desktop\\school\\Olddata")
+#setwd("C:\\Users\\user\\Dropbox\\我的電腦 (LAPTOP-O5VTIAH6)\\Desktop\\招生戰情室2_14")
 
-piemaker_all<-function(way){
-  x = readr::read_csv(src) %>%
-    filter(departmentNum >= '1', departmentNum <= '57')
-  #filter可取用選擇的資料範圍 選所有系所編號(1~57)
+src= "C:\\Apps\\Rshiny\\data\\110學生成績資料.csv"
+src2 = "C:\\Apps\\Rshiny\\data\\106-110入學生1102基本資料.csv"
+#src = "C:\\Users\\Jerry\\Desktop\\school\\OldData\\110學生成績資料.csv"
+#src2 = "C:\\Users\\Jerry\\Desktop\\school\\OldData\\106-110入學生1102基本資料.csv"
+#src = "C:\\Users\\user\\Dropbox\\我的電腦 (LAPTOP-O5VTIAH6)\\Desktop\\招生戰情室2_14\\110學生成績資料.csv"
+#src2 = "C:\\Users\\user\\Dropbox\\我的電腦 (LAPTOP-O5VTIAH6)\\Desktop\\招生戰情室2_14\\106-110入學生1102基本資料.csv"
+
+#------------------------------------- function 設置 ------------------------------------#
+#----------------三大入學管道------------------#
+#kind = all or col or dep (全校,院,系)
+#dep = 某院 or 某系
+piemaker_way<-function(kind,dep,way){
+  
+  #資料讀取
+  x = readr::read_csv(src)
+  if (kind=='col'){
+    t = x %>% filter(學院名 %in% c(dep))
+  }
+  else if (kind == 'dep'){
+    t = x %>% filter(系所名 %in% c(dep))
+  }
+  else{
+    t=x
+  }
+
   #繁星篩選
   if (way=='繁星推薦'){
-    cc1 = x %>% filter(入學管道 == '繁星推薦一般考生' | 入學管道 == '繁星推薦原住民')%>%
-      group_by(scoreStratified) %>%
-      summarise(CNT = n())
+    cc1 = t %>% filter(入學管道 == '繁星推薦一般考生' | 入學管道 == '繁星推薦原住民')
   }
   else if(way =='申請入學'){
-    cc1 = x %>% filter(grepl('申請入學', 入學管道))%>%
-      group_by(scoreStratified) %>%
-      summarise(CNT = n())
+    cc1 = t %>% filter(grepl('申請入學', 入學管道))
   }
   else if(way == '指考'){
-    cc1 = x %>% filter(入學管道 == '學士班指考' | 入學管道 == '重點科別公費生考試入學')%>%
-      group_by(scoreStratified) %>%
-      summarise(CNT = n())
+    cc1 = t %>% filter(入學管道 == '學士班指考' | 入學管道 == '重點科別公費生考試入學')
   }
-  billboarder(height = 250, width = 280) %>% 
+  
+  #成績分類
+  cc1 = group_by(cc1,scoreStratified)
+  cc1 = summarise(cc1,CNT=n())
+  
+  #作圖
+  billboarder(height = 200, width = 230) %>% 
     bb_piechart(cc1) %>%
     bb_legend(position = 'right') %>%
     bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
     bb_title(text = way, position = "center")
 }
 
-piemaker_college<-function(college,way){
-  x = readr::read_csv(src) %>%
-    filter(學院名 %in% c(college))
-  #filter可取用選擇的資料範圍 選所有系所編號(1~57)
-  #繁星篩選
+#----------------全校就學現況------------------#
+#kind = all or col or dep (全校,院,系)
+#dep = 某院 or 某系
+piemaker_Situation<-function(kind,dep,way){
+  
+  #資料讀取
+  x = readr::read_csv(src2) %>% filter(學年度 %in% c('110'))%>%
+    filter(現況中文 %in% c('在學','休學','退學')) 
+  if (kind=='col'){
+    t = x %>% filter(學院名 %in% c(dep))
+  }
+  else if (kind == 'dep'){
+    t = x %>% filter(系所名 %in% c(dep))
+  }
+  else{
+    t = x
+  }
+
+  #入學方式篩選
   if (way=='繁星推薦'){
-    cc1 = x %>% filter(入學管道 == '繁星推薦一般考生' | 入學管道 == '繁星推薦原住民')%>%
-      group_by(scoreStratified) %>%
-      summarise(CNT = n())
+    x1 = t %>% filter(入學管道 == '繁星推薦一般考生' | 入學管道 == '繁星推薦原住民')
   }
   else if(way =='申請入學'){
-    cc1 = x %>% filter(grepl('申請入學', 入學管道))%>%
-      group_by(scoreStratified) %>%
-      summarise(CNT = n())
+    x1 = t %>% filter(grepl('申請入學', 入學管道))
   }
   else if(way == '指考'){
-    cc1 = x %>% filter(入學管道 == '學士班指考' | 入學管道 == '重點科別公費生考試入學')%>%
-      group_by(scoreStratified) %>%
-      summarise(CNT = n())
+    x1 = t %>% filter(入學管道 == '學士班指考' | 入學管道 == '重點科別公費生考試入學')
   }
-  #繁星做圖
-  billboarder(height = 250, width = 280) %>% 
-    bb_piechart(cc1) %>%
+  
+  #現況分類
+  x1 = group_by(x1,現況中文)
+  x1 = summarise(x1,CNT=n())
+  
+  #作圖
+  billboarder(height = 200, width = 230) %>% 
+    bb_piechart(x1) %>%
     bb_legend(position = 'right') %>%
-    bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
+    bb_colors_manual("在學" = "#FF5511", "休學" = "#00AA00", "退學" = "#9955FF") %>%
     bb_title(text = way, position = "center")
 }
 
-piemaker_department<-function(department,way){
-  x = readr::read_csv(src) %>%
-    filter(系所名 %in% c(department))
-  #filter可取用選擇的資料範圍 選所有系所編號(1~57)
-  if (way=='繁星推薦'){
-    cc1 = x %>% filter(入學管道 == '繁星推薦一般考生' | 入學管道 == '繁星推薦原住民')%>%
-      group_by(scoreStratified) %>%
-      summarise(CNT = n())
-  }
-  else if(way =='申請入學'){
-    cc1 = x %>% filter(grepl('申請入學', 入學管道))%>%
-      group_by(scoreStratified) %>%
-      summarise(CNT = n())
-  }
-  else if(way == '指考'){
-    cc1 = x %>% filter(入學管道 == '學士班指考' | 入學管道 == '重點科別公費生考試入學')%>%
-      group_by(scoreStratified) %>%
-      summarise(CNT = n())
-  }
-  billboarder(height = 250, width = 280) %>% 
-    bb_piechart(cc1) %>%
-    bb_legend(position = 'right') %>%
-    bb_colors_manual("0~59分" = "#9955FF", "60~69分" = "#009FCC", "70~79分" = "#00AA00", "80~89分" = "#FF5511", "90~100分" = "#FF0000") %>%
-    bb_title(text = way, position = "center")
-}
+
+
+#----------------------------------------- 選項設置 ------------------------------------------#
 
 院 <- c("請選擇院所", "傳播學院", "外國語文學院", "教育學院", "文學院", "民生學院", "法律學院", "理工學院", "社會科學院", "管理學院", "織品服裝學院", "藝術學院", "醫學院")
 系 <- c("請選擇系所")
@@ -118,69 +128,106 @@ piemaker_department<-function(department,way){
 織品服裝學院系 <- c("請選擇系所","織品服裝學系織品設計組", "織品服裝學系服飾設計組", "織品服裝學系織品服飾行銷組")
 藝術學院系 <- c("請選擇系所","音樂學系", "應用美術學系", "景觀設計學系")
 醫學院系 <- c("請選擇系所","醫學系", "護理學系", "公共衛生學系", "臨床心理學系", "職能治療學系", "呼吸治療學系")
-# Define UI ----
-ui <- navbarPage(
-  "各系110年度三大入學管道學業表現",
-  theme = shinythemes::shinytheme("flatly"),
-  #shinythemes::themeSelector("flatly"),
-  #theme = shinythemes::themeSelector("flatly"),
-  #theme = shinytheme("cerulean"),
-  #titlePanel("各系110年度三大入學管道學業表現"),
-  tags$head(
-    tags$link(rel = "stylesheet", type = "text/css", href = "theme2.css")
-  ),
-  sidebarLayout(
-    sidebarPanel(
-      fluidRow(
-        column(6,
-               checkboxInput("v0", label = "全校分析結果",value=FALSE))),
-      fluidRow(
-        column(6,
-               selectInput("v1", label = "請選擇院所", choices = 院, multiple = FALSE)),
-        column(6,
-               selectInput("v2", label = "請選擇系所", choices = 系所, multiple = FALSE, selected = " ")),
-        textOutput("selected_v1"),#在底下server內新增對應Rcode
-        textOutput("selected_v2"),#在底下server內新增對應Rcode
-      ),
-      # fluidRow(
-      #   column(6,
-      #     submitButton("分析結果")
-      #   )
-      # )
-    ),
-    mainPanel(
-      h3("本頁面探討全校三大入學管道之學生的總平均學業表現，將學生學業平均分數分成以下五大級距，根據所得出的比例數據做分析。"),
-      tabsetPanel(
-        tabPanel("全校之分析結果",
-                 fluidRow(
-                          column(4,uiOutput("imageOfAll1")),
-                          column(4,uiOutput("imageOfAll2")),
-                          column(4,uiOutput("imageOfAll3"))),
-                 textOutput("explanationOfAll")),
-        tabPanel("各院之分析結果",
-                 fluidRow(
-                          column(4,uiOutput("imageOfCol1")),
-                          column(4,uiOutput("imageOfCol2")),
-                          column(4,uiOutput("imageOfCol3"))),
-                 textOutput("explanationOfCollege")),
-        tabPanel("該院各系所的分析結果",
-                 fluidRow(
-                   column(4,uiOutput("imageOfDepartment1")),
-                   column(4,uiOutput("imageOfDepartment2")),
-                   column(4,uiOutput("imageOfDepartment3"))),
-                   textOutput("explanationOfDepartment"))
+
+#----------------------------------------- ui ---------------------------------------------#
+ui <- dashboardPage(
+        dashboardHeader(title = "招生研究分析報告", titleWidth = 180),
+        dashboardSidebar(
+          width = 180,
+          sidebarMenu(
+            menuItem("110學年度三大入學管道",tabName = "三大入學管道"),
+            menuItem("全校整體就學現況",tabName = "全校整體就學現況")
+            
+          )
+        ),
+        dashboardBody(
+          theme = shinythemes::shinytheme("flatly"),
+          tags$head(
+            tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")
+          ),
+          tabItems(
+            tabItem(tabName = "三大入學管道",
+                    sidebarLayout(
+                      sidebarPanel(
+                        width = 3,
+                        fluidRow(
+                          checkboxInput("v0", label = "全校分析結果",value=FALSE),
+                          selectInput("v1", label = "請選擇院所", choices = 院, multiple = FALSE),
+                          selectInput("v2", label = "請選擇系所", choices = 系所, multiple = FALSE, selected = " "),
+                          textOutput("selected_v1"),#在底下server內新增對應Rcode
+                          textOutput("selected_v2"),#在底下server內新增對應Rcode
+                        ),
+                      ),
+                      mainPanel(
+                        h3("本頁面探討全校三大入學管道之學生的總平均學業表現，將學生學業平均分數分成以下五大級距，根據所得出的比例數據做分析。"),
+                        tabsetPanel(
+                          tabPanel("全校之分析結果",
+                                   fluidRow(
+                                     column(4,uiOutput("imageOfAll1")),
+                                     column(4,uiOutput("imageOfAll2")),
+                                     column(4,uiOutput("imageOfAll3"))),
+                                   textOutput("explanationOfAll")),
+                          tabPanel("各院之分析結果",
+                                   fluidRow(
+                                     column(4,uiOutput("imageOfCol1")),
+                                     column(4,uiOutput("imageOfCol2")),
+                                     column(4,uiOutput("imageOfCol3"))),
+                                   textOutput("explanationOfCollege")),
+                          tabPanel("該院各系所的分析結果",
+                                   fluidRow(
+                                     column(4,uiOutput("imageOfDepartment1")),
+                                     column(4,uiOutput("imageOfDepartment2")),
+                                     column(4,uiOutput("imageOfDepartment3"))),
+                                   textOutput("explanationOfDepartment"))
+                        )
+                      )
+                    )),
+            tabItem(tabName = "全校整體就學現況",
+                    sidebarLayout(
+                      sidebarPanel(
+                        width = 3,
+                        fluidRow(
+                          checkboxInput("v3", label = "全校分析結果",value=FALSE),
+                          selectInput("v4", label = "請選擇院所", choices = 院, multiple = FALSE),
+                          selectInput("v5", label = "請選擇系所", choices = 系所, multiple = FALSE, selected = " "),
+                          textOutput("selected_v4"),#在底下server內新增對應Rcode
+                          textOutput("selected_v5"),#在底下server內新增對應Rcode
+                        ),
+                      ),
+                      mainPanel(
+                        h3("本頁面探討全校三大入學管道之學生就學現況表現，將學生學業分成以下四類，根據所得出的比例數據做分析。"),
+                        tabsetPanel(
+                          tabPanel("全校之分析結果",
+                                   fluidRow(
+                                     column(4,uiOutput("imageOfSituationAll1")),
+                                     column(4,uiOutput("imageOfSituationAll2")),
+                                     column(4,uiOutput("imageOfSituationAll3"))),
+                                   textOutput("explanationOfSituationAll")),
+                           tabPanel("各院之分析結果",
+                                    fluidRow(
+                                      column(4,uiOutput("imageOfSituationCol1")),
+                                      column(4,uiOutput("imageOfSituationCol2")),
+                                      column(4,uiOutput("imageOfSituationCol3"))),
+                                    textOutput("explanationOfSituationCol")),
+                           tabPanel("該院各系所的分析結果",
+                                    fluidRow(
+                                      column(4,uiOutput("imageOfSituationDep1")),
+                                      column(4,uiOutput("imageOfSituationDep2")),
+                                      column(4,uiOutput("imageOfSituationDep3"))),
+                                    textOutput("explanationOfSituationDep"))
+                        )
+                      )
+                    ))
+          )
+        )
       )
-    )
-  )
-)
+
+
+#--------------------------------------------- server --------------------------------------------#
+
 server <- function(input, output, session){
-  #自動更新院選項
-  #observe({
-  #if(!is.null(input$v2))
-  #updateSelectInput(session, "v1", 
-  #choices = 院[!(院 %in% input$v2)], 
-  #selected = isolate(input$v1))
-  #})
+  
+  #---------------------------------110學年度三大入學管道----------------------------#
   #自動更新系選項
   observe({
     if(!is.null(input$v1))
@@ -235,6 +282,7 @@ server <- function(input, output, session){
                         choices = 醫學院系[!(醫學院系 %in% input$v1)], 
                         selected = "請選擇系所")
   })
+ 
   #取得使用者所選取的院所
   output$selected_v2 <- renderText({
     paste("您已選擇:",input$v2)
@@ -242,30 +290,23 @@ server <- function(input, output, session){
   output$selected_v1 <- renderText({ 
     paste("您已選擇:",input$v1)
   })
-  #the 1st one is choosen and the 2nd one is absent
-  #if((is.null(input$v1)==FALSE) & (is.null(input$v2)==TRUE)){
   
-  #setwd("C:\\Users\\user\\Dropbox\\我的電腦 (LAPTOP-O5VTIAH6)\\Desktop\\招生戰情室2_7")
-  setwd("//Users//guanruilin//Documents//Rshiny//data")
-  #setwd("C:\\Users\\Jerry\\Desktop\\school\\Olddata")
   
-  data <- read.csv('final2.csv')
-  #顯示:只選擇各院後之圖片(沒選擇系所)
-
+  #------------------------- plot -----------------------------#
   #全校
   output$imageOfAll1 <- renderUI({
     if(input$v0=="TRUE"){
-      piemaker_all(way='繁星推薦')
+      piemaker_way(kind='all',dep = null,way='繁星推薦')
     }
   })
   output$imageOfAll2 <- renderUI({
     if(input$v0=="TRUE"){
-      piemaker_all(way='申請入學')
+      piemaker_way(kind='all',dep = null,way='申請入學')
     }
   })
   output$imageOfAll3 <- renderUI({
     if(input$v0=="TRUE"){
-      piemaker_all(way='指考')
+      piemaker_way(kind='all',dep = null,way='指考')
     }
   })
   output$explanationOfAll <- renderText({
@@ -273,15 +314,16 @@ server <- function(input, output, session){
       paste("全校110學年度入學三大入學生學業表現可知，平均在80分以上之比例高低為：繁星推薦(66%)>個人申請(42%)>指考分發(34%)，可推論110學年度傳播學院繁星推薦入學的學生學業表現相對優良。")
     }
   })
+  
   #院
   output$imageOfCol1 <- renderUI({
-    piemaker_college(input$v1,way='繁星推薦')
+    piemaker_way(kind='col',dep=input$v1,'繁星推薦')
   })
   output$imageOfCol2 <- renderUI({
-    piemaker_college(input$v1,way='申請入學')
+    piemaker_way('col',input$v1,'申請入學')
   })
   output$imageOfCol3 <- renderUI({
-    piemaker_college(input$v1,way='指考')
+    piemaker_way('col',input$v1,'指考')
   })
   output$explanationOfCollege <- renderText({
     if(input$v1 == "傳播學院"){            
@@ -321,15 +363,16 @@ server <- function(input, output, session){
       paste("醫學院110學年度入學三大入學生學業表現可知，110學年度入學生總平均在80分以上之比例高低為：繁星推薦(84%)>個人申請(68%)>指考分發(66%)，可推論110學年度醫學院繁星推薦入學的學生學業表現相對優良。")
     }
   })
+  
   #系
   output$imageOfDepartment1 <- renderUI({
-    piemaker_department(input$v2,way='繁星推薦')
+    piemaker_way('dep',input$v2,'繁星推薦')
   })
   output$imageOfDepartment2 <- renderUI({
-    piemaker_department(input$v2,way='申請入學')
+    piemaker_way('dep',input$v2,'申請入學')
   })
   output$imageOfDepartment3 <- renderUI({
-    piemaker_department(input$v2,way='指考')
+    piemaker_way('dep',input$v2,'指考')
   })
   output$explanationOfDepartment <- renderText({
     if(input$v2 == "影像傳播學系"){            
@@ -505,5 +548,113 @@ server <- function(input, output, session){
     }
     
   })
+  
+  #--------------------------------- 全校就學現況 ----------------------------#
+  #自動更新系選項
+  observe({
+    if(!is.null(input$v4))
+      
+      if((input$v4)=="傳播學院"){
+        updateSelectInput(session, "v5", 
+                          choices = 傳播學院系[!(傳播學院系 %in% input$v4)], 
+                          selected = "請選擇系所")
+      }
+    else if((input$v4)=="外國語文學院")
+      updateSelectInput(session, "v5", 
+                        choices = 外國語文學院系[!(外國語文學院系 %in% input$v4)], 
+                        selected = "請選擇系所")
+    else if((input$v4)=="教育學院")
+      updateSelectInput(session, "v5", 
+                        choices = 教育學院系[!(教育學院系 %in% input$v4)], 
+                        selected = "請選擇系所")
+    else if((input$v4)=="文學院")
+      updateSelectInput(session, "v5", 
+                        choices = 文學院系[!(文學院系 %in% input$v4)], 
+                        selected = "請選擇系所")
+    else if((input$v4)=="民生學院")
+      updateSelectInput(session, "v5", 
+                        choices = 民生學院系[!(民生學院系 %in% input$v4)], 
+                        selected = "請選擇系所")
+    else if((input$v4)=="法律學院")
+      updateSelectInput(session, "v5", 
+                        choices = 法律學院系[!(法律學院系 %in% input$v4)], 
+                        selected = "請選擇系所")
+    else if((input$v4)=="理工學院")
+      updateSelectInput(session, "v5", 
+                        choices = 理工學院系[!(理工學院系 %in% input$v4)], 
+                        selected = "請選擇系所")
+    else if((input$v4)=="社會科學院")
+      updateSelectInput(session, "v5", 
+                        choices = 社會科學院系[!(社會科學院系 %in% input$v4)], 
+                        selected = "請選擇系所")
+    else if((input$v4)=="管理學院")
+      updateSelectInput(session, "v5", 
+                        choices = 管理學院系[!(管理學院系 %in% input$v4)], 
+                        selected = "請選擇系所")
+    else if((input$v4)=="織品服裝學院")
+      updateSelectInput(session, "v5", 
+                        choices = 織品服裝學院系[!(織品服裝學院系 %in% input$v4)], 
+                        selected = "請選擇系所")
+    else if((input$v4)=="藝術學院")
+      updateSelectInput(session, "v5", 
+                        choices = 藝術學院系[!(藝術學院系 %in% input$v4)], 
+                        selected = "請選擇系所")
+    else if((input$v4)=="醫學院")
+      updateSelectInput(session, "v5", 
+                        choices = 醫學院系[!(醫學院系 %in% input$v4)], 
+                        selected = "請選擇系所")
+  })
+  
+  output$selected_v5 <- renderText({
+    paste("您已選擇:",input$v5)
+  })
+  output$selected_v4 <- renderText({ 
+    paste("您已選擇:",input$v4)
+  })
+  
+  #----------------------- plot ---------------------------#
+  #全校
+  output$imageOfSituationAll1 <- renderUI({
+    if(input$v3=="TRUE"){
+      piemaker_Situation('all',null,'繁星推薦')
+    }
+  })
+  output$imageOfSituationAll2 <- renderUI({
+    if(input$v3=="TRUE"){
+      piemaker_Situation('all',null,'申請入學')
+    }
+  })
+  output$imageOfSituationAll3 <- renderUI({
+    if(input$v3=="TRUE"){
+      piemaker_Situation('all',null,'指考')
+    }
+  })
+  output$explanationOfSituationAll <- renderText({
+    if(input$v3=="TRUE"){
+      paste("全校整體在學比例高低排序依序為繁星入學(92%)>申請入學(86%)>指考入學(81%)，退學比例高低排序依序為指考入學(16%)>申請入學(12%)>繁星入學(7%)，休學比例高低排序依序為指考入學(2.9%)>申請入學(2.5%)>繁星入學(1.3%)。由此可知繁星入學110 學年度整體就學表現最佳。")
+    }
+  })
+  
+  #院
+  # output$imageOfSituationCol1 <- renderUI({
+  #   piemaker_Situation('col',input$v4,'繁星推薦')
+  # })
+  # output$imageOfSituationCol2 <- renderUI({
+  #   piemaker_Situation('col',input$v4,'申請入學')
+  # })
+  # output$imageOfSituationCol3 <- renderUI({
+  #   piemaker_Situation('col',input$v4,'指考')
+  # })
+  # 
+  # #系
+  # output$imageOfSituationDep1 <- renderUI({
+  #   piemaker_Situation('dep',input$v5,'繁星推薦')
+  # })
+  # output$imageOfSituationDep2 <- renderUI({
+  #   piemaker_Situation('dep',input$v5,'申請入學')
+  # })
+  # output$imageOfSituationDep3 <- renderUI({
+  #   piemaker_Situation('dep',input$v5,'指考')
+  # })
 }
 shinyApp(ui = ui, server = server)
